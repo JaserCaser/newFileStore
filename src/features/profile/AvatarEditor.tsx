@@ -1,5 +1,6 @@
 import { Camera, FolderOpen, Link, Trash2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
+import { isValidAvatarUrl } from './avatar-utils'
 
 type AvatarEditorProps = {
   readonly value: string
@@ -151,8 +152,5 @@ export function AvatarEditor({ value, initials, onChange }: AvatarEditorProps) {
 
 function resolveDisplaySrc(value: string): string {
   const url = value.trim()
-  const norm = url.toLowerCase()
-  if (norm.startsWith('data:image/')) return url
-  if (norm.startsWith('http://') || norm.startsWith('https://')) return url
-  return ''
+  return isValidAvatarUrl(url) ? url : ''
 }

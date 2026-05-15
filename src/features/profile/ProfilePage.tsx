@@ -13,6 +13,7 @@ import { useMemo, useState, type ReactNode, type SyntheticEvent } from 'react'
 import { useAuth } from '../auth/useAuth'
 import type { UserProfileUpdate } from '../auth/types'
 import { AvatarEditor } from './AvatarEditor'
+import { isValidAvatarUrl } from './avatar-utils'
 import './ProfilePage.css'
 
 type ProfilePageProps = {
@@ -257,8 +258,5 @@ function getInitials(name: string): string {
 
 function sanitizeAvatarUrl(value: string): string {
   const url = value.trim()
-  const normalized = url.toLowerCase()
-  if (normalized.startsWith('data:image/')) return url
-  if (normalized.startsWith('http://') || normalized.startsWith('https://')) return url
-  return ''
+  return isValidAvatarUrl(url) ? url : ''
 }

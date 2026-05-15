@@ -50,6 +50,7 @@ describe('ProfilePage', () => {
   afterEach(() => {
     cleanup()
     vi.useRealTimers()
+    vi.unstubAllGlobals()
   })
 
   it('renders profile form fields with initial values from user', () => {
@@ -86,30 +87,25 @@ describe('ProfilePage', () => {
     const updateProfile = vi.fn(() => mockUser)
     renderProfilePage({ updateProfile })
 
-    // Helper: after clearing a field there may be multiple empty inputs (including
-    // the hidden AvatarEditor file input). Use getAllByDisplayValue and pick the
-    // last text/email input that is empty.
-    const getEmptyTextInput = () => {
-      const empties = screen.getAllByDisplayValue('')
-      // Filter to visible text/email/tel inputs only (not file inputs)
-      return empties.filter(
-        (el) => el.tagName === 'INPUT' && (el as HTMLInputElement).type !== 'file',
-      ).at(-1)!
-    }
+    const usernameInput = screen.getByDisplayValue('Alice')
+    const emailInput = screen.getByDisplayValue('alice@example.com')
+    const phoneInput = screen.getByDisplayValue('13800138000')
+    const departmentInput = screen.getByDisplayValue('Product')
+    const locationInput = screen.getByDisplayValue('Shanghai')
+    const bioInput = screen.getByDisplayValue('Product owner')
 
-    await user.clear(screen.getByDisplayValue('Alice'))
-    await user.type(getEmptyTextInput(), '  Alice Zhang  ')
-    await user.clear(screen.getByDisplayValue('alice@example.com'))
-    await user.type(getEmptyTextInput(), '  zhang@example.com  ')
-    await user.clear(screen.getByDisplayValue('13800138000'))
-    await user.type(getEmptyTextInput(), '  13900139000  ')
-    await user.clear(screen.getByDisplayValue('Product'))
-    await user.type(getEmptyTextInput(), '  Design  ')
-    await user.clear(screen.getByDisplayValue('Shanghai'))
-    await user.type(getEmptyTextInput(), '  Hangzhou  ')
-    const bioTextarea = screen.getByDisplayValue('Product owner')
-    await user.clear(bioTextarea)
-    await user.type(bioTextarea, '  Likes clean files  ')
+    await user.clear(usernameInput)
+    await user.type(screen.getByPlaceholderText('请输入显示名称'), '  Alice Zhang  ')
+    await user.clear(emailInput)
+    await user.type(screen.getByPlaceholderText('请输入邮箱'), '  zhang@example.com  ')
+    await user.clear(phoneInput)
+    await user.type(screen.getByPlaceholderText('请输入手机号'), '  13900139000  ')
+    await user.clear(departmentInput)
+    await user.type(screen.getByPlaceholderText('请输入部门/身份'), '  Design  ')
+    await user.clear(locationInput)
+    await user.type(screen.getByPlaceholderText('请输入所在地'), '  Hangzhou  ')
+    await user.clear(bioInput)
+    await user.type(screen.getByPlaceholderText('写一点关于自己的说明...'), '  Likes clean files  ')
 
     await user.click(screen.getByRole('button', { name: '保存资料' }))
 
@@ -176,7 +172,6 @@ describe('ProfilePage', () => {
     expect(updateProfile).toHaveBeenCalledWith(
       expect.objectContaining({ avatar: fakeBase64 }),
     )
-    vi.unstubAllGlobals()
   })
 
   it('calls onBack from back and cancel buttons', async () => {
