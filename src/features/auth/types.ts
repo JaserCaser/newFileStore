@@ -7,14 +7,35 @@ export type User = {
   readonly username: string
   readonly account: string
   readonly role: UserRole
+  readonly canAccessAdmin?: boolean
+  readonly status?: 'active' | 'suspended'
+  readonly createdAt?: string
+  readonly lastLoginAt?: string
+  readonly storageQuotaGb?: number
   readonly avatar?: string
+  readonly email?: string
+  readonly phone?: string
+  readonly bio?: string
+  readonly department?: string
+  readonly location?: string
 }
+
+export type UserProfileUpdate = Partial<
+  Pick<User, 'username' | 'avatar' | 'email' | 'phone' | 'bio' | 'department' | 'location'>
+>
 
 /** 登录参数 */
 export type LoginParams = {
   readonly account: string
   readonly password: string
   readonly remember: boolean
+}
+
+export type RegisterParams = {
+  readonly username: string
+  readonly account: string
+  readonly password: string
+  readonly email?: string
 }
 
 /** 登录结果 */

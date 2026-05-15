@@ -1,6 +1,9 @@
 /** 文件/文件夹类型标识 */
 export type FileType = 'folder' | 'document' | 'image' | 'video' | 'audio' | 'archive' | 'other'
 
+/** 文件集合视图 */
+export type FileCollectionView = 'all' | 'recent' | 'photos' | 'office'
+
 /** 文件项 */
 export type FileItem = {
   readonly id: string
@@ -36,6 +39,7 @@ export type FileListParams = {
   readonly parentId?: string | null
   readonly keyword?: string
   readonly type?: FileType
+  readonly view?: FileCollectionView
   readonly sort?: SortConfig
   readonly page?: number
   readonly pageSize?: number
@@ -86,6 +90,18 @@ export type UploadResult = {
   readonly file: FileItem
 }
 
+/** 磁力链接拉取参数 */
+export type MagnetPullParams = {
+  readonly magnetLink: string
+  readonly parentId: string | null
+  readonly name?: string
+}
+
+/** 磁力链接拉取结果 */
+export type MagnetPullResult = {
+  readonly file: FileItem
+}
+
 /** 存储用量信息 */
 export type StorageInfo = {
   readonly used: number
@@ -125,6 +141,9 @@ export type FileService = {
     parentId: string | null,
     onProgress?: UploadProgressCallback,
   ): Promise<UploadResult>
+
+  /** 通过磁力链接拉取文件 */
+  pullMagnet(params: MagnetPullParams): Promise<MagnetPullResult>
 
   /** 下载文件（返回 Blob） */
   download(id: string): Promise<Blob>

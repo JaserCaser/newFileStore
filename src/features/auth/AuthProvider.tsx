@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState, type ReactNode } from 'react'
-import type { AuthState, LoginParams, LoginResult, User } from './types'
-import { AuthContext, type AuthContextValue, type RegisterParams } from './auth-context'
-import { generateToken, validateLogin, registerUser } from './admin-config'
+import type { AuthState, LoginParams, LoginResult, RegisterParams, User, UserProfileUpdate } from './types'
+import { AuthContext, type AuthContextValue } from './auth-context'
+import { generateToken, validateLogin, registerUser, updateUserProfileInDirectory } from './admin-config'
 
 const STORAGE_KEY = 'filestore_auth'
 
@@ -30,6 +30,16 @@ function clearAuth(): void {
   sessionStorage.removeItem(STORAGE_KEY)
 }
 
+function updateStoredUser(user: User, token: string): void {
+  const serialized = JSON.stringify({ user, token })
+  if (localStorage.getItem(STORAGE_KEY)) {
+    localStorage.setItem(STORAGE_KEY, serialized)
+  }
+  if (sessionStorage.getItem(STORAGE_KEY)) {
+    sessionStorage.setItem(STORAGE_KEY, serialized)
+  }
+}
+
 export function AuthProvider({ children }: { readonly children: ReactNode }) {
   const [authState, setAuthState] = useState<AuthState>(() => {
     const stored = loadStoredAuth()
@@ -39,11 +49,15 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
     return { user: null, token: null, isAuthenticated: false }
   })
 
-  const login = useCallback(async (params: LoginParams): Promise<LoginResult> => {
+  const login = useCallback(
+    async (
+      params: LoginParams,
+      options?: { readonly requireAdminAccess?: boolean },
+    ): Promise<LoginResult> => {
     // 模拟网络延迟
     await new Promise<void>((resolve) => setTimeout(resolve, 300))
 
-    const result = validateLogin(params.account, params.password)
+    const result = await validateLogin(params.account, params.password, options)
     if (result.success && result.user) {
       const token = generateToken(result.user.id)
       persistAuth(result.user, token, params.remember)
@@ -52,7 +66,9 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
     }
 
     return { success: false, message: result.message ?? '账号或密码错误' }
-  }, [])
+    },
+    [],
+  )
 
   const logout = useCallback(() => {
     clearAuth()
@@ -62,7 +78,7 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
   const register = useCallback(async (params: RegisterParams): Promise<LoginResult> => {
     await new Promise<void>((resolve) => setTimeout(resolve, 300))
 
-    const result = registerUser(params.username, params.account, params.password)
+    const result = await registerUser(params.username, params.account, params.password, params.email)
     if (result.success && result.user) {
       const token = generateToken(result.user.id)
       persistAuth(result.user, token, false)
@@ -73,9 +89,30 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
     return { success: false, message: result.message ?? '注册失败' }
   }, [])
 
+  const updateProfile = useCallback((profile: UserProfileUpdate): User | null => {
+    const updateResult: { token: string | null; user: User | null } = { token: null, user: null }
+
+    setAuthState((current) => {
+      if (!current.user || !current.token) {
+        return current
+      }
+
+      updateResult.token = current.token
+      updateResult.user = { ...current.user, ...profile }
+      updateUserProfileInDirectory(current.user.id, profile)
+      return { ...current, user: updateResult.user }
+    })
+
+    if (updateResult.user && updateResult.token) {
+      updateStoredUser(updateResult.user, updateResult.token)
+    }
+
+    return updateResult.user
+  }, [])
+
   const value = useMemo<AuthContextValue>(
-    () => ({ ...authState, login, logout, register }),
-    [authState, login, logout, register],
+    () => ({ ...authState, login, logout, register, updateProfile }),
+    [authState, login, logout, register, updateProfile],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

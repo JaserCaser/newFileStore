@@ -1,5 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { BreadcrumbNode, FileItem, FileListParams, SortConfig, StorageInfo } from '../api'
+import type {
+  BreadcrumbNode,
+  FileCollectionView,
+  FileItem,
+  FileListParams,
+  SortConfig,
+  StorageInfo,
+} from '../api'
 import { useFileService } from '../api/use-file-service'
 
 type UseFileManagerOptions = {
@@ -17,6 +24,8 @@ type UseFileManagerReturn = {
   error: string | null
   /** 当前文件夹 ID */
   currentParentId: string | null
+  /** 当前集合视图 */
+  activeView: FileCollectionView
   /** 面包屑路径 */
   breadcrumbs: readonly BreadcrumbNode[]
   /** 搜索关键字 */
@@ -32,6 +41,8 @@ type UseFileManagerReturn = {
 
   /** 进入文件夹 */
   navigateTo: (parentId: string | null, name?: string) => void
+  /** 切换集合视图 */
+  setActiveView: (view: FileCollectionView) => void
   /** 返回上一级 */
   navigateUp: () => void
   /** 搜索 */
@@ -57,6 +68,8 @@ type UseFileManagerReturn = {
   deleteItems: (ids: readonly string[]) => Promise<void>
   /** 上传文件 */
   uploadFiles: (files: readonly File[]) => Promise<void>
+  /** 通过磁力链接拉取文件 */
+  pullMagnet: (magnetLink: string, name?: string) => Promise<void>
   /** 下载文件 */
   downloadFile: (id: string) => Promise<void>
   /** 复制文件 */
@@ -67,6 +80,8 @@ type UseFileManagerReturn = {
   refresh: () => Promise<void>
 }
 
+const RECENT_PREVIEW_PAGE_SIZE = 24
+
 export function useFileManager(options: UseFileManagerOptions = {}): UseFileManagerReturn {
   const { pageSize = 50, onError, onSuccess } = options
   const service = useFileService()
@@ -75,6 +90,7 @@ export function useFileManager(options: UseFileManagerOptions = {}): UseFileMana
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [currentParentId, setCurrentParentId] = useState<string | null>(null)
+  const [activeView, setActiveViewState] = useState<FileCollectionView>('all')
   const [breadcrumbs, setBreadcrumbs] = useState<readonly BreadcrumbNode[]>([
     { id: 'root', name: '全部文件' },
   ])
@@ -115,11 +131,16 @@ export function useFileManager(options: UseFileManagerOptions = {}): UseFileMana
 
   // 加载文件列表
   useEffect(() => {
-    const base = { parentId: currentParentId, sort, page, pageSize }
+    const base =
+      activeView === 'all'
+        ? { parentId: currentParentId, sort, page, pageSize, view: activeView }
+        : activeView === 'recent'
+          ? { sort, page, pageSize: RECENT_PREVIEW_PAGE_SIZE, view: activeView }
+          : { sort, page, pageSize, view: activeView }
     const params: FileListParams = keyword ? { ...base, keyword } : base
     // eslint-disable-next-line react-hooks/set-state-in-effect -- 数据获取后更新状态是标准模式
     void fetchFiles(params)
-  }, [currentParentId, keyword, sort, page, pageSize, fetchFiles])
+  }, [activeView, currentParentId, keyword, sort, page, pageSize, fetchFiles])
 
   // 加载存储用量
   useEffect(() => {
@@ -127,6 +148,7 @@ export function useFileManager(options: UseFileManagerOptions = {}): UseFileMana
   }, [service])
 
   const navigateTo = useCallback((parentId: string | null, name?: string) => {
+    setActiveViewState('all')
     setCurrentParentId(parentId)
     setPage(1)
     setKeyword('')
@@ -146,6 +168,23 @@ export function useFileManager(options: UseFileManagerOptions = {}): UseFileMana
     }
   }, [])
 
+  const setActiveView = useCallback((view: FileCollectionView) => {
+    setActiveViewState(view)
+    setCurrentParentId(null)
+    setPage(1)
+    setKeyword('')
+    setSelectedIds(new Set())
+
+    const names: Record<FileCollectionView, string> = {
+      all: '全部文件',
+      recent: '最近使用',
+      photos: '照片',
+      office: 'Office 文档',
+    }
+
+    setBreadcrumbs([{ id: 'root', name: names[view] }])
+  }, [])
+
   const navigateUp = useCallback(() => {
     if (breadcrumbs.length <= 1) return
     const parent = breadcrumbs[breadcrumbs.length - 2]
@@ -153,12 +192,17 @@ export function useFileManager(options: UseFileManagerOptions = {}): UseFileMana
   }, [breadcrumbs, navigateTo])
 
   const refresh = useCallback(async () => {
-    const base = { parentId: currentParentId, sort, page, pageSize }
+    const base =
+      activeView === 'all'
+        ? { parentId: currentParentId, sort, page, pageSize, view: activeView }
+        : activeView === 'recent'
+          ? { sort, page, pageSize: RECENT_PREVIEW_PAGE_SIZE, view: activeView }
+          : { sort, page, pageSize, view: activeView }
     const params: FileListParams = keyword ? { ...base, keyword } : base
     await fetchFiles(params)
     const info = await service.getStorageInfo()
     setStorageInfo(info)
-  }, [fetchFiles, currentParentId, keyword, sort, page, pageSize, service])
+  }, [activeView, fetchFiles, currentParentId, keyword, sort, page, pageSize, service])
 
   const createFolder = useCallback(
     async (name: string) => {
@@ -222,6 +266,24 @@ export function useFileManager(options: UseFileManagerOptions = {}): UseFileMana
         onSuccess?.('上传成功')
       } catch (err) {
         onError?.(err instanceof Error ? err.message : '上传失败')
+        throw err
+      }
+    },
+    [service, currentParentId, refresh, onError, onSuccess],
+  )
+
+  const pullMagnet = useCallback(
+    async (magnetLink: string, name?: string) => {
+      try {
+        await service.pullMagnet({
+          magnetLink,
+          parentId: currentParentId,
+          ...(name ? { name } : {}),
+        })
+        await refresh()
+        onSuccess?.('磁力链接已加入拉取队列')
+      } catch (err) {
+        onError?.(err instanceof Error ? err.message : '磁力链接拉取失败')
         throw err
       }
     },
@@ -307,6 +369,7 @@ export function useFileManager(options: UseFileManagerOptions = {}): UseFileMana
     loading,
     error,
     currentParentId,
+    activeView,
     breadcrumbs,
     keyword,
     sort,
@@ -314,6 +377,7 @@ export function useFileManager(options: UseFileManagerOptions = {}): UseFileMana
     pagination,
     storageInfo,
     navigateTo,
+    setActiveView,
     navigateUp,
     setKeyword,
     setSort,
@@ -326,6 +390,7 @@ export function useFileManager(options: UseFileManagerOptions = {}): UseFileMana
     deleteSelected,
     deleteItems,
     uploadFiles,
+    pullMagnet,
     downloadFile,
     copyItems,
     moveItems,

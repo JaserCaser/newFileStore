@@ -22,6 +22,8 @@ const EXT_MAP: Record<string, FileType> = {
   webp: 'image',
   bmp: 'image',
   ico: 'image',
+  heic: 'image',
+  heif: 'image',
   // 视频
   mp4: 'video',
   avi: 'video',

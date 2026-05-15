@@ -1,0 +1,168 @@
+@keyframes page-reveal {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes soft-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes card-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes cloud-float {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+
+  50% {
+    transform: translateY(-7px) scale(1.015);
+  }
+}
+
+@keyframes cloud-gloss {
+  0%,
+  100% {
+    opacity: 0.58;
+    transform: translateX(-3px);
+  }
+
+  50% {
+    opacity: 0.9;
+    transform: translateX(4px);
+  }
+}
+
+@keyframes orbit-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes bubble-breathe {
+  0%,
+  100% {
+    scale: 0.96;
+    opacity: 0.82;
+  }
+
+  45% {
+    scale: 1.06;
+    opacity: 1;
+  }
+
+  70% {
+    scale: 0.9;
+    opacity: 0.66;
+  }
+}
+
+@keyframes orbit-halo-drift {
+  0%,
+  100% {
+    transform: rotate(-8deg) scale(1);
+  }
+
+  50% {
+    transform: rotate(-2deg) scale(1.04);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
+}
+
+@media (max-width: 920px) {
+  .login-hero {
+    grid-template-columns: 1fr;
+    align-items: start;
+    gap: 34px;
+  }
+
+  .hero-copy {
+    max-width: none;
+  }
+
+  .login-card {
+    justify-self: start;
+  }
+}
+
+@media (max-width: 620px) {
+  .variant-switch {
+    top: 12px;
+    left: 12px;
+  }
+
+  .login-nav {
+    width: calc(100% - 28px);
+    padding-top: 42px;
+  }
+
+  .nav-pill {
+    display: none;
+  }
+
+  .login-hero {
+    width: calc(100% - 28px);
+    padding: 26px 0 44px;
+  }
+
+  .hero-copy h1 {
+    font-size: 42px;
+  }
+
+  .hero-subtitle {
+    font-size: 17px;
+  }
+
+  .login-card {
+    padding: 20px;
+    border-radius: 22px;
+  }
+
+  .form-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .modern-shell {
+    width: calc(100% - 28px);
+    padding-top: 86px;
+  }
+}

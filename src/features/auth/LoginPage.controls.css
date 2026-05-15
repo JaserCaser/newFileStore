@@ -1,0 +1,146 @@
+.password-input-wrap {
+  position: relative;
+}
+
+.password-input-wrap input {
+  padding-right: 50px;
+}
+
+.password-visibility-toggle {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  padding: 0;
+  color: var(--color-muted);
+  background: transparent;
+  border: 0;
+  border-radius: 50%;
+  transform: translateY(-50%);
+  transition:
+    background 160ms ease,
+    color 160ms ease;
+}
+
+.password-visibility-toggle:hover {
+  color: var(--color-text);
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.password-visibility-toggle:focus-visible {
+  outline: 2px solid var(--color-apple-blue);
+  outline-offset: 2px;
+}
+
+.password-visibility-toggle:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.form-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  color: var(--color-muted);
+  font-size: 13px;
+}
+
+.remember {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.remember input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--color-ink);
+}
+
+.form-row a,
+.forgot-password-link {
+  color: var(--color-text);
+  font-weight: 700;
+}
+
+.forgot-password-link {
+  padding: 0;
+  font: inherit;
+  background: transparent;
+  border: 0;
+  cursor: not-allowed;
+}
+
+.login-error {
+  padding: 12px 16px;
+  background: rgba(255, 59, 48, 0.08);
+  border: 1px solid rgba(255, 59, 48, 0.2);
+  border-radius: 12px;
+  color: var(--color-danger);
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+  animation: soft-reveal 200ms ease-out both;
+}
+
+.submit-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 52px;
+  color: var(--color-surface);
+  background: var(--color-apple-blue);
+  border: 0;
+  border-radius: 999px;
+  font-size: 16px;
+  font-weight: 700;
+  transition:
+    background 180ms ease,
+    transform 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.submit-button:hover {
+  background: var(--color-apple-blue-hover);
+  box-shadow: 0 16px 34px rgba(0, 113, 227, 0.22);
+  transform: translateY(-1px);
+}
+
+.submit-button:active {
+  transform: translateY(0);
+}
+
+.submit-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.signal-strip {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  width: min(1120px, calc(100% - 44px));
+  margin: 0 auto;
+  padding: 0 0 24px;
+  color: var(--color-muted);
+  font-size: 12px;
+  animation: soft-reveal 560ms ease-out 360ms both;
+}
+
+.signal-strip div {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}

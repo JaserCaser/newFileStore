@@ -4,8 +4,12 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
+    "dev": "npm run dev:app",
+    "dev:app": "vite --mode app",
+    "dev:admin": "vite --mode admin",
+    "build": "npm run build:app",
+    "build:app": "tsc -b && vite build --mode app",
+    "build:admin": "tsc -b && vite build --mode admin",
     "typecheck": "tsc -b",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
@@ -13,7 +17,9 @@
     "format:check": "prettier . --check",
     "test": "vitest run",
     "test:watch": "vitest",
-    "preview": "vite preview"
+    "preview": "npm run preview:app",
+    "preview:app": "vite preview --mode app",
+    "preview:admin": "vite preview --mode admin"
   },
   "dependencies": {
     "lucide-react": "^1.14.0",

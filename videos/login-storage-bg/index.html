@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FileStore Login Background</title>
+  </head>
+  <body>
+    <div
+      id="filestore-login-bg"
+      data-composition-id="filestore-login-bg"
+      data-start="0"
+      data-duration="15"
+      data-width="1920"
+      data-height="1080"
+      data-track-index="0"
+    >
+      <div class="scene-content" aria-hidden="true">
+        <!-- Background base -->
+        <div class="void-bg"></div>
+        
+        <!-- The Center Reserve - Keeps UI clean for the login form -->
+        <div class="center-reserve"></div>
+        
+        <!-- Scene 1: The Void (Data Fragments) -->
+        <div class="fragments-container">
+           <div class="fragment frag-1"></div>
+           <div class="fragment frag-2"></div>
+           <div class="fragment frag-3"></div>
+           <div class="fragment frag-4"></div>
+           <div class="fragment frag-5"></div>
+        </div>
+        
+        <!-- Scene 2 & 3: The Sorting & Safe State -->
+        <!-- We avoid the center. Put folders on the left and right -->
+        <div class="cloud-folder folder-left">
+           <div class="folder-glow"></div>
+           <div class="folder-glass">
+              <svg viewBox="0 0 24 24" class="folder-icon"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z" fill="currentColor"/></svg>
+           </div>
+        </div>
+        
+        <div class="cloud-folder folder-right">
+           <div class="folder-glow"></div>
+           <div class="folder-glass">
+              <svg viewBox="0 0 24 24" class="folder-icon"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z" fill="currentColor"/></svg>
+           </div>
+        </div>
+
+        <!-- Sorted Files that will fly into folders -->
+        <!-- Left files -->
+        <div class="file-item file-doc f-l-1">
+            <div class="file-icon"></div>
+        </div>
+        <div class="file-item file-img f-l-2">
+            <div class="file-icon"></div>
+        </div>
+        <div class="file-item file-vid f-l-3">
+            <div class="file-icon"></div>
+        </div>
+        
+        <!-- Right files -->
+        <div class="file-item file-doc f-r-1">
+            <div class="file-icon"></div>
+        </div>
+        <div class="file-item file-arc f-r-2">
+            <div class="file-icon"></div>
+        </div>
+        <div class="file-item file-img f-r-3">
+            <div class="file-icon"></div>
+        </div>
+
+      </div>
+
+      <style>
+        /* CSS reset & base */
+        html, body {
+          width: 100%;
+          height: 100%;
+          margin: 0;
+          overflow: hidden;
+          background: #f5f5f7;
+          font-family: "SF Pro Display", "SF Pro Text", -apple-system, sans-serif;
+        }
+
+        #filestore-login-bg {
+          position: relative;
+          width: 1920px;
+          height: 1080px;
+          overflow: hidden;
+          background: #f5f5f7;
+        }
+
+        .scene-content {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          overflow: hidden;
+        }
+
+        .void-bg {
+          position: absolute;
+          inset: 0;
+          background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.8) 0%, rgba(245,245,247,0.2) 100%);
+        }
+
+        /* Center reserved for the login form */
+        .center-reserve {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          width: 600px;
+          height: 700px;
+          transform: translate(-50%, -50%);
+          background: radial-gradient(circle, rgba(255,255,255,0.9) 20%, transparent 70%);
+          pointer-events: none;
+        }
+
+        /* Fragments (Unstructured Data) */
+        .fragments-container {
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
+        }
+
+        .fragment {
+          position: absolute;
+          border: 1px solid rgba(110, 110, 115, 0.15);
+          background: linear-gradient(135deg, rgba(255,255,255,0.4), rgba(255,255,255,0.1));
+          backdrop-filter: blur(8px);
+          border-radius: 12px;
+        }
+
+        .frag-1 { width: 40px; height: 40px; top: 20%; left: 15%; border-radius: 8px; }
+        .frag-2 { width: 60px; height: 20px; top: 70%; left: 25%; border-radius: 6px; }
+        .frag-3 { width: 30px; height: 30px; top: 15%; left: 80%; border-radius: 50%; }
+        .frag-4 { width: 80px; height: 80px; top: 65%; left: 75%; border-radius: 20px; }
+        .frag-5 { width: 50px; height: 10px; top: 40%; left: 85%; border-radius: 4px; }
+
+        /* Cloud Folders (The Safe State) */
+        .cloud-folder {
+          position: absolute;
+          width: 280px;
+          height: 200px;
+          z-index: 10;
+        }
+
+        .folder-left {
+          top: 50%;
+          left: 15%;
+          transform: translateY(-50%);
+        }
+
+        .folder-right {
+          top: 50%;
+          right: 15%;
+          transform: translateY(-50%);
+        }
+
+        .folder-glow {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          width: 320px;
+          height: 240px;
+          transform: translate(-50%, -50%);
+          background: radial-gradient(circle, rgba(0, 113, 227, 0.15) 0%, transparent 70%);
+          border-radius: 50%;
+          filter: blur(20px);
+        }
+
+        .folder-glass {
+          position: absolute;
+          inset: 0;
+          background: rgba(255, 255, 255, 0.6);
+          border: 1px solid rgba(255, 255, 255, 0.8);
+          border-radius: 24px;
+          backdrop-filter: blur(24px) saturate(1.5);
+          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.04), 0 1px 0 rgba(255, 255, 255, 1) inset;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .folder-icon {
+          width: 64px;
+          height: 64px;
+          color: rgba(0, 113, 227, 0.8);
+          filter: drop-shadow(0 4px 12px rgba(0, 113, 227, 0.2));
+        }
+
+        /* File Items (The Sorting) */
+        .file-item {
+          position: absolute;
+          width: 100px;
+          height: 120px;
+          background: rgba(255, 255, 255, 0.8);
+          border: 1px solid rgba(255, 255, 255, 0.9);
+          border-radius: 16px;
+          backdrop-filter: blur(12px);
+          box-shadow: 0 12px 24px rgba(0,0,0,0.06);
+          z-index: 5;
+        }
+        
+        .file-item::before {
+          content: '';
+          position: absolute;
+          top: 16px;
+          left: 16px;
+          width: 32px;
+          height: 32px;
+          border-radius: 8px;
+          background: var(--file-color);
+          opacity: 0.9;
+        }
+
+        .file-item::after {
+          content: '';
+          position: absolute;
+          bottom: 24px;
+          left: 16px;
+          right: 16px;
+          height: 4px;
+          border-radius: 2px;
+          background: rgba(110, 110, 115, 0.2);
+        }
+
+        .file-doc { --file-color: #0071e3; }
+        .file-img { --file-color: #f7a03c; }
+        .file-vid { --file-color: #af52de; }
+        .file-arc { --file-color: #a2845e; }
+
+        /* Final positions for layout-first approach */
+        .f-l-1 { top: 25%; left: 12%; transform: rotate(-10deg); }
+        .f-l-2 { top: 65%; left: 8%; transform: rotate(5deg); }
+        .f-l-3 { top: 75%; left: 22%; transform: rotate(15deg); }
+
+        .f-r-1 { top: 22%; right: 18%; transform: rotate(8deg); }
+        .f-r-2 { top: 60%; right: 6%; transform: rotate(-12deg); }
+        .f-r-3 { top: 70%; right: 26%; transform: rotate(-5deg); }
+
+      </style>
+
+      <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+      <script>
+        window.__timelines = window.__timelines || {};
+        
+        // 15 seconds duration for a smooth, slow loop
+        const tl = gsap.timeline({ paused: true });
+
+        // === Scene 1: The Void (0s -> 3s) ===
+        tl.from(".fragment", {
+          opacity: 0,
+          scale: 0.5,
+          rotation: () => gsap.utils.random(-45, 45),
+          duration: 2,
+          stagger: 0.2,
+          ease: "power2.out"
+        }, 0);
+
+        tl.to(".fragment", {
+          y: "-=20",
+          rotation: "+=10",
+          duration: 3,
+          ease: "sine.inOut",
+          yoyo: true,
+          repeat: 1
+        }, 0);
+
+        tl.to(".fragment", {
+          opacity: 0,
+          scale: 0,
+          duration: 1,
+          ease: "power2.in"
+        }, 3);
+
+        // === Scene 2: Ordered Descent (3s -> 6s) ===
+        tl.from(".cloud-folder", {
+          opacity: 0,
+          y: 40,
+          scale: 0.9,
+          duration: 2,
+          stagger: 0.3,
+          ease: "power3.out"
+        }, 3.5);
+
+        tl.from(".folder-glow", {
+          opacity: 0,
+          scale: 0.5,
+          duration: 2.5,
+          stagger: 0.3,
+          ease: "power2.out"
+        }, 3.8);
+
+        const leftFiles = [".f-l-1", ".f-l-2", ".f-l-3"];
+        const rightFiles = [".f-r-1", ".f-r-2", ".f-r-3"];
+
+        tl.from(leftFiles, {
+          x: "+=200",
+          y: "-=100",
+          rotation: () => gsap.utils.random(-40, 40),
+          scale: 0.6,
+          opacity: 0,
+          duration: 1.8,
+          stagger: 0.15,
+          ease: "expo.out"
+        }, 4.2);
+
+        tl.from(rightFiles, {
+          x: "-=200",
+          y: "-=100",
+          rotation: () => gsap.utils.random(-40, 40),
+          scale: 0.6,
+          opacity: 0,
+          duration: 1.8,
+          stagger: 0.15,
+          ease: "expo.out"
+        }, 4.5);
+
+        tl.to([".f-l-1", ".f-l-2", ".f-l-3", ".f-r-1", ".f-r-2", ".f-r-3"], {
+          scale: 1.05,
+          duration: 0.3,
+          yoyo: true,
+          repeat: 1,
+          ease: "sine.inOut",
+          stagger: 0.1
+        }, 5);
+
+        // === Scene 3: Silent Guardians (6.8s -> 15s) ===
+        tl.to(".cloud-folder", {
+          y: "-=15",
+          duration: 3.5,
+          ease: "sine.inOut",
+          yoyo: true,
+          repeat: 1
+        }, 6.8);
+
+        leftFiles.forEach((file, i) => {
+          tl.to(file, {
+            y: `+=${10 + i * 5}`,
+            rotation: `+=${2 - i}`,
+            duration: 2.5 + i * 0.5,
+            ease: "sine.inOut",
+            yoyo: true,
+            repeat: 1
+          }, 6.8 + i * 0.2);
+        });
+
+        rightFiles.forEach((file, i) => {
+          tl.to(file, {
+            y: `-=${10 + i * 5}`,
+            rotation: `-=${2 - i}`,
+            duration: 2.8 + i * 0.3,
+            ease: "sine.inOut",
+            yoyo: true,
+            repeat: 1
+          }, 6.8 + i * 0.3);
+        });
+
+        tl.to(".folder-glow", {
+          scale: 1.1,
+          opacity: 0.8,
+          duration: 3.5,
+          ease: "sine.inOut",
+          yoyo: true,
+          repeat: 1
+        }, 6.8);
+
+        // === Loop Closure (13.5s -> 15s) ===
+        tl.to(".scene-content", {
+          opacity: 0,
+          duration: 1.5,
+          ease: "power2.inOut"
+        }, 13.5);
+
+        // The timeline must be exactly 15s. Add empty set to enforce duration.
+        tl.set({}, {}, 15);
+
+        window.__timelines["filestore-login-bg"] = tl;
+      </script>
+    </div>
+  </body>
+</html>

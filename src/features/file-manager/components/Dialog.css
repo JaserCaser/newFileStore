@@ -80,9 +80,9 @@
   color: var(--color-muted);
 }
 
-.fm-dialog-field input {
+.fm-dialog-field input,
+.fm-dialog-field textarea {
   width: 100%;
-  height: 48px;
   padding: 0 16px;
   border: 1px solid rgba(0, 0, 0, 0.12);
   border-radius: 12px;
@@ -95,12 +95,26 @@
     box-shadow 180ms ease;
 }
 
-.fm-dialog-field input:focus {
+.fm-dialog-field input {
+  height: 48px;
+}
+
+.fm-dialog-field textarea {
+  min-height: 112px;
+  padding-top: 13px;
+  padding-bottom: 13px;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.fm-dialog-field input:focus,
+.fm-dialog-field textarea:focus {
   border-color: var(--color-apple-blue);
   box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.14);
 }
 
-.fm-dialog-field input::placeholder {
+.fm-dialog-field input::placeholder,
+.fm-dialog-field textarea::placeholder {
   color: var(--color-soft);
 }
 
@@ -135,6 +149,18 @@
 
 .text-success {
   color: var(--color-success);
+}
+
+/* ─── 磁力链接弹窗 ─── */
+
+.fm-dialog-magnet {
+  width: min(560px, calc(100% - 32px));
+}
+
+.fm-magnet-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 /* ─── 移动弹窗 ─── */

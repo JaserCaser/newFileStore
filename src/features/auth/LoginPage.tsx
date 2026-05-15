@@ -1,42 +1,51 @@
 import {
   ArrowLeftRight,
   ArrowRight,
-  CheckCircle2,
   Cloud,
-  Eye,
-  EyeOff,
-  Puzzle,
+  FileText,
+  Folder,
+  Image,
+  Lock,
+  Music,
   ShieldCheck,
+  UploadCloud,
 } from 'lucide-react'
-import { type SyntheticEvent, useCallback, useState } from 'react'
+import {
+  type CSSProperties,
+  type ReactNode,
+  type SyntheticEvent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react'
+import { PasswordField } from './PasswordField'
+import { RegisterForm } from './RegisterForm'
 import { useAuth } from './useAuth'
+import './LoginPage.legacy.css'
+import './LoginPage.controls.css'
+import './LoginPage.modern.css'
+import './LoginPage.motion.css'
 
 type LoginVariant = 'legacy' | 'modern'
 type AuthMode = 'login' | 'register'
+const TITLE_STYLE_COUNT = 4
 
-type HumanChallenge = {
-  readonly answer: readonly string[]
-  readonly options: readonly string[]
-  readonly phrase: string
-}
-
-const HUMAN_CHALLENGE_PHRASES = [
-  '云开雾散',
-  '海纳百川',
-  '厚德载物',
-  '自强不息',
-  '知行合一',
-  '风和日丽',
-  '水到渠成',
-  '柳暗花明',
-] as const
-
-export function LoginPage() {
+export function LoginPage({
+  mode = 'product',
+  onAuthenticated,
+}: {
+  readonly mode?: 'product' | 'admin'
+  readonly onAuthenticated?: () => void
+}) {
   const [variant, setVariant] = useState<LoginVariant>('modern')
+  const [videoReady, setVideoReady] = useState(false)
+  const videoRef = useRef<HTMLVideoElement | null>(null)
   const { login, register } = useAuth()
   const [loginError, setLoginError] = useState<string | null>(null)
   const [registerError, setRegisterError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [loginLoading, setLoginLoading] = useState(false)
+  const [registerLoading, setRegisterLoading] = useState(false)
 
   const handleLoginSubmit = useCallback(
     (event: SyntheticEvent<HTMLFormElement>) => {
@@ -53,16 +62,18 @@ export function LoginPage() {
         return
       }
 
-      setLoading(true)
-      void login({ account, password, remember })
+      setLoginLoading(true)
+      void login({ account, password, remember }, { requireAdminAccess: mode === 'admin' })
         .then((result) => {
-          if (!result.success) {
+          if (result.success) {
+            onAuthenticated?.()
+          } else {
             setLoginError(result.message ?? '登录失败')
           }
         })
-        .finally(() => setLoading(false))
+        .finally(() => setLoginLoading(false))
     },
-    [login],
+    [login, mode, onAuthenticated],
   )
 
   const handleRegisterSubmit = useCallback(
@@ -74,6 +85,7 @@ export function LoginPage() {
       const username = getTextField(formData, 'username')
       const account = getTextField(formData, 'account')
       const password = getTextField(formData, 'password')
+      const email = getTextField(formData, 'email') || undefined
       const humanVerified = getTextField(formData, 'humanVerified') === 'true'
 
       if (!username || !account || !password) {
@@ -82,31 +94,76 @@ export function LoginPage() {
       }
 
       if (!humanVerified) {
-        setRegisterError('请先完成拖拽验证')
+        setRegisterError('请先完成图形验证')
         return
       }
 
-      setLoading(true)
-      void register({ username, account, password })
+      setRegisterLoading(true)
+      void register({ username, account, password, ...(email ? { email } : {}) })
         .then((result) => {
-          if (!result.success) {
+          if (result.success) {
+            onAuthenticated?.()
+          } else {
             setRegisterError(result.message ?? '注册失败')
           }
         })
-        .finally(() => setLoading(false))
+        .finally(() => setRegisterLoading(false))
     },
-    [register],
+    [register, onAuthenticated],
   )
 
   const isModern = variant === 'modern'
 
+  useEffect(() => {
+    if (!isModern) {
+      return
+    }
+
+    const video = videoRef.current
+    if (!video) {
+      return
+    }
+
+    if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+      setVideoReady(true)
+      return
+    }
+
+    const handleReady = () => setVideoReady(true)
+    video.addEventListener('canplay', handleReady, { once: true })
+
+    return () => {
+      video.removeEventListener('canplay', handleReady)
+    }
+  }, [isModern])
+
   return (
     <main className={isModern ? 'login-page login-page-modern' : 'login-page'}>
+      {isModern ? (
+        <video
+          ref={videoRef}
+          className={videoReady ? 'login-bg-video is-ready' : 'login-bg-video'}
+          aria-hidden="true"
+          autoPlay
+          loop
+          muted
+          playsInline
+          preload="metadata"
+          tabIndex={-1}
+        >
+          <source src="/videos/login-storage-bg.webm" type="video/webm" />
+          <source src="/videos/login-storage-bg.mp4" type="video/mp4" />
+        </video>
+      ) : null}
+
       <button
         className="variant-switch"
         title={isModern ? '切换旧登录页面' : '切换新登录页面'}
         type="button"
-        onClick={() => setVariant(isModern ? 'legacy' : 'modern')}
+        onClick={() => {
+          if (isModern) setVideoReady(false)
+          setVariant(isModern ? 'legacy' : 'modern')
+        }}
       >
         <ArrowLeftRight aria-hidden="true" size={16} />
         <span>{isModern ? '切换旧登录页面' : '切换新登录页面'}</span>
@@ -114,19 +171,23 @@ export function LoginPage() {
 
       {isModern ? (
         <ModernLogin
+          mode={mode}
           onLoginSubmit={handleLoginSubmit}
           onRegisterSubmit={handleRegisterSubmit}
           loginError={loginError}
           registerError={registerError}
-          loading={loading}
+          loginLoading={loginLoading}
+          registerLoading={registerLoading}
         />
       ) : (
         <LegacyLogin
+          mode={mode}
           onLoginSubmit={handleLoginSubmit}
           onRegisterSubmit={handleRegisterSubmit}
           loginError={loginError}
           registerError={registerError}
-          loading={loading}
+          loginLoading={loginLoading}
+          registerLoading={registerLoading}
         />
       )}
     </main>
@@ -134,20 +195,24 @@ export function LoginPage() {
 }
 
 function LegacyLogin({
+  mode: authSurface,
   onLoginSubmit,
   onRegisterSubmit,
   loginError,
   registerError,
-  loading,
+  loginLoading,
+  registerLoading,
 }: {
+  readonly mode: 'product' | 'admin'
   readonly onLoginSubmit: (event: SyntheticEvent<HTMLFormElement>) => void
   readonly onRegisterSubmit: (event: SyntheticEvent<HTMLFormElement>) => void
   readonly loginError: string | null
   readonly registerError: string | null
-  readonly loading: boolean
+  readonly loginLoading: boolean
+  readonly registerLoading: boolean
 }) {
-  const [mode, setMode] = useState<AuthMode>('login')
-  const isRegister = mode === 'register'
+  const [formMode, setFormMode] = useState<AuthMode>('login')
+  const isRegister = formMode === 'register'
 
   return (
     <>
@@ -156,7 +221,9 @@ function LegacyLogin({
           <Cloud aria-hidden="true" size={19} />
           <span>个人 FileStore</span>
         </a>
-        <span className="nav-pill">个人存储空间</span>
+        <span className="nav-pill">
+          {authSurface === 'admin' ? '后台运维端' : '个人存储空间'}
+        </span>
       </nav>
 
       <section className="login-hero" aria-labelledby="login-title">
@@ -171,17 +238,18 @@ function LegacyLogin({
         {isRegister ? (
           <RegisterForm
             onSubmit={onRegisterSubmit}
-            onShowLogin={() => setMode('login')}
+            onShowLogin={() => setFormMode('login')}
             registerError={registerError}
+            loading={registerLoading}
           />
         ) : (
           <LoginForm
             title="登录个人空间"
-            helper="进入你的 FileStore。"
+            helper={authSurface === 'admin' ? '使用已授权账号进入后台运维端。' : '进入你的 FileStore。'}
             onSubmit={onLoginSubmit}
-            onShowRegister={() => setMode('register')}
+            onShowRegister={authSurface === 'admin' ? undefined : () => setFormMode('register')}
             loginError={loginError}
-            loading={loading}
+            loading={loginLoading}
           />
         )}
       </section>
@@ -192,76 +260,201 @@ function LegacyLogin({
 }
 
 function ModernLogin({
+  mode,
   onLoginSubmit,
   onRegisterSubmit,
   loginError,
   registerError,
-  loading,
+  loginLoading,
+  registerLoading,
 }: {
+  readonly mode: 'product' | 'admin'
   readonly onLoginSubmit: (event: SyntheticEvent<HTMLFormElement>) => void
   readonly onRegisterSubmit: (event: SyntheticEvent<HTMLFormElement>) => void
   readonly loginError: string | null
   readonly registerError: string | null
-  readonly loading: boolean
+  readonly loginLoading: boolean
+  readonly registerLoading: boolean
 }) {
+  const [formMode, setFormMode] = useState<AuthMode>('login')
+
   return (
     <section className="modern-shell" aria-labelledby="modern-login-title">
       <div className="modern-intro">
-        <svg
-          className="modern-mark"
-          viewBox="0 0 132 88"
-          role="img"
-          aria-label="FileStore 云端标识"
-        >
-          <defs>
-            <linearGradient id="cloudFill" x1="28" x2="104" y1="12" y2="78">
-              <stop offset="0" stopColor="#8fd5ff" />
-              <stop offset="0.48" stopColor="#2f9fff" />
-              <stop offset="1" stopColor="#006edc" />
-            </linearGradient>
-            <linearGradient id="cloudGloss" x1="38" x2="94" y1="10" y2="58">
-              <stop offset="0" stopColor="#ffffff" stopOpacity="0.7" />
-              <stop offset="1" stopColor="#ffffff" stopOpacity="0" />
-            </linearGradient>
-          </defs>
-          <path
-            className="modern-cloud-shape"
-            d="M102.6 76.2H35.4C18.1 76.2 6 65.4 6 51.2c0-12.8 10.5-23.1 24.8-24.1C36.6 14.2 49.6 6 65.2 6c20.3 0 36.9 13.8 39.1 31.8 12.6 2.2 21.7 9.8 21.7 20 0 11-9.9 18.4-23.4 18.4Z"
-          />
-          <path
-            className="modern-cloud-gloss"
-            d="M29 31.6C36.6 18.9 49.8 11.8 65 11.8c17.6 0 32.2 11.7 34.5 28.1 9.1 1.5 15.8 6 18.6 12.1-10.3-5.3-20.8-4.5-30.8-2.5-14 2.8-27.3 7-42.8 2.2-8.1-2.5-13.4-8-15.5-20.1Z"
-          />
-        </svg>
-        <h1 id="modern-login-title">欢迎回来</h1>
+        <StorageOrbitHero />
+        <ModernTitle authMode={formMode} mode={mode} />
       </div>
 
       <AuthFlipCard
+        formMode={formMode}
         onLoginSubmit={onLoginSubmit}
+        onFormModeChange={setFormMode}
+        mode={mode}
         onRegisterSubmit={onRegisterSubmit}
         loginError={loginError}
         registerError={registerError}
-        loading={loading}
+        loginLoading={loginLoading}
+        registerLoading={registerLoading}
       />
     </section>
   )
 }
 
+function ModernTitle({
+  authMode,
+  mode,
+}: {
+  readonly authMode: AuthMode
+  readonly mode: 'product' | 'admin'
+}) {
+  const titlePair =
+    mode === 'admin'
+      ? (['后台运维', 'Admin console'] as const)
+      : authMode === 'register'
+        ? (['你好呀', 'halo~'] as const)
+        : (['欢迎回来', 'Welcome back'] as const)
+  const [titleIndex, setTitleIndex] = useState(0)
+  const [titleStyleIndex, setTitleStyleIndex] = useState(() => getRandomTitleStyle())
+  const [visible, setVisible] = useState(true)
+
+  useEffect(() => {
+    setVisible(false)
+    const resetTimer = window.setTimeout(() => {
+      setTitleIndex(0)
+      setTitleStyleIndex((current) => getNextTitleStyle(current))
+      setVisible(true)
+    }, 160)
+
+    return () => {
+      window.clearTimeout(resetTimer)
+    }
+  }, [authMode, mode])
+
+  useEffect(() => {
+    let swapTimer: number | undefined
+    const interval = window.setInterval(() => {
+      setVisible(false)
+      swapTimer = window.setTimeout(() => {
+        setTitleIndex((current) => (current + 1) % titlePair.length)
+        setTitleStyleIndex((current) => getNextTitleStyle(current))
+        setVisible(true)
+      }, 260)
+    }, 3000)
+
+    return () => {
+      window.clearInterval(interval)
+      if (swapTimer !== undefined) {
+        window.clearTimeout(swapTimer)
+      }
+    }
+  }, [titlePair.length, titlePair[0], titlePair[1]])
+
+  return (
+    <h1
+      className={`modern-title title-style-${titleStyleIndex}${visible ? '' : ' is-fading'}`}
+      id="modern-login-title"
+    >
+      {titlePair[titleIndex]}
+    </h1>
+  )
+}
+
+function getRandomTitleStyle(): number {
+  return Math.floor(Math.random() * TITLE_STYLE_COUNT)
+}
+
+function getNextTitleStyle(current: number): number {
+  if (TITLE_STYLE_COUNT <= 1) {
+    return current
+  }
+
+  let next = getRandomTitleStyle()
+  while (next === current) {
+    next = getRandomTitleStyle()
+  }
+
+  return next
+}
+
+function StorageOrbitHero() {
+  return (
+    <div className="storage-orbit-hero" aria-hidden="true">
+      <div className="orbit-halo orbit-halo-back" />
+      <div className="storage-cloud-core">
+        <span className="cloud-lobe cloud-lobe-left" />
+        <span className="cloud-lobe cloud-lobe-top" />
+        <span className="cloud-lobe cloud-lobe-right" />
+        <span className="cloud-base" />
+        <Cloud className="cloud-core-icon" size={50} />
+      </div>
+      <div className="orbit-ring orbit-ring-wide">
+        <OrbitBubble tone="sky" label="IMG" style={{ '--orbit-angle': '8deg' } as CSSProperties}>
+          <Image size={24} />
+        </OrbitBubble>
+        <OrbitBubble tone="mint" label="DOC" style={{ '--orbit-angle': '76deg' } as CSSProperties}>
+          <FileText size={23} />
+        </OrbitBubble>
+        <OrbitBubble tone="sun" label="DIR" style={{ '--orbit-angle': '146deg' } as CSSProperties}>
+          <Folder size={24} />
+        </OrbitBubble>
+        <OrbitBubble tone="blue" label="UP" style={{ '--orbit-angle': '212deg' } as CSSProperties}>
+          <UploadCloud size={25} />
+        </OrbitBubble>
+        <OrbitBubble tone="rose" label="KEY" style={{ '--orbit-angle': '286deg' } as CSSProperties}>
+          <Lock size={22} />
+        </OrbitBubble>
+      </div>
+      <div className="orbit-ring orbit-ring-tight">
+        <OrbitBubble tone="violet" label="AUD" style={{ '--orbit-angle': '326deg' } as CSSProperties}>
+          <Music size={22} />
+        </OrbitBubble>
+      </div>
+      <div className="orbit-halo orbit-halo-front" />
+    </div>
+  )
+}
+
+function OrbitBubble({
+  children,
+  label,
+  style,
+  tone,
+}: {
+  readonly children: ReactNode
+  readonly label: string
+  readonly style: CSSProperties
+  readonly tone: 'blue' | 'mint' | 'rose' | 'sky' | 'sun' | 'violet'
+}) {
+  return (
+    <span className={`orbit-bubble orbit-bubble-${tone}`} style={style}>
+      {children}
+      <small>{label}</small>
+    </span>
+  )
+}
+
 function AuthFlipCard({
+  formMode,
+  mode: authSurface,
+  onFormModeChange,
   onLoginSubmit,
   onRegisterSubmit,
   loginError,
   registerError,
-  loading,
+  loginLoading,
+  registerLoading,
 }: {
+  readonly formMode: AuthMode
+  readonly mode: 'product' | 'admin'
+  readonly onFormModeChange: (mode: AuthMode) => void
   readonly onLoginSubmit: (event: SyntheticEvent<HTMLFormElement>) => void
   readonly onRegisterSubmit: (event: SyntheticEvent<HTMLFormElement>) => void
   readonly loginError: string | null
   readonly registerError: string | null
-  readonly loading: boolean
+  readonly loginLoading: boolean
+  readonly registerLoading: boolean
 }) {
-  const [mode, setMode] = useState<AuthMode>('login')
-  const isRegister = mode === 'register'
+  const isRegister = formMode === 'register'
 
   return (
     <div className="auth-card-scene">
@@ -269,20 +462,27 @@ function AuthFlipCard({
         <div className="auth-face auth-face-front" aria-hidden={isRegister} inert={isRegister}>
           <LoginForm
             compact
-            title="欢迎回来"
-            helper="登录后继续访问你的个人文件空间。"
+            title={authSurface === 'admin' ? '后台运维' : '欢迎回来'}
+            helper={
+              authSurface === 'admin'
+                ? '仅超级管理员或已授权账号可登录。'
+                : '登录后继续访问你的个人文件空间。'
+            }
             onSubmit={onLoginSubmit}
-            onShowRegister={() => setMode('register')}
+            onShowRegister={
+              authSurface === 'admin' ? undefined : () => onFormModeChange('register')
+            }
             loginError={loginError}
-            loading={loading}
+            loading={loginLoading}
           />
         </div>
 
         <div className="auth-face auth-face-back" aria-hidden={!isRegister} inert={!isRegister}>
           <RegisterForm
             onSubmit={onRegisterSubmit}
-            onShowLogin={() => setMode('login')}
+            onShowLogin={() => onFormModeChange('login')}
             registerError={registerError}
+            loading={registerLoading}
           />
         </div>
       </div>
@@ -303,7 +503,7 @@ function LoginForm({
   readonly helper: string
   readonly loginError: string | null
   readonly loading: boolean
-  readonly onShowRegister?: () => void
+  readonly onShowRegister?: (() => void) | undefined
   readonly onSubmit: (event: SyntheticEvent<HTMLFormElement>) => void
   readonly title: string
 }) {
@@ -352,7 +552,9 @@ function LoginForm({
           <input name="remember" type="checkbox" disabled={loading} />
           <span>保持登录</span>
         </label>
-        <a href="/forgot-password">忘记密码？</a>
+        <button className="forgot-password-link" type="button" disabled>
+          忘记密码？
+        </button>
       </div>
 
       <button className="submit-button" type="submit" disabled={loading}>
@@ -369,229 +571,6 @@ function LoginForm({
         </div>
       ) : null}
     </form>
-  )
-}
-
-function RegisterForm({
-  onShowLogin,
-  onSubmit,
-  registerError,
-}: {
-  readonly onShowLogin: () => void
-  readonly onSubmit: (event: SyntheticEvent<HTMLFormElement>) => void
-  readonly registerError: string | null
-}) {
-  const [showPassword, setShowPassword] = useState(false)
-  const [humanChallenge] = useState(createHumanChallenge)
-  const [humanVerificationStep, setHumanVerificationStep] = useState(0)
-  const [humanVerificationStatus, setHumanVerificationStatus] = useState<
-    'idle' | 'error' | 'success'
-  >('idle')
-  const isHumanVerified = humanVerificationStatus === 'success'
-
-  const handleVerificationClick = (character: string) => {
-    if (isHumanVerified) {
-      return
-    }
-
-    if (character !== humanChallenge.answer[humanVerificationStep]) {
-      setHumanVerificationStep(0)
-      setHumanVerificationStatus('error')
-      return
-    }
-
-    const nextStep = humanVerificationStep + 1
-    if (nextStep === humanChallenge.answer.length) {
-      setHumanVerificationStep(nextStep)
-      setHumanVerificationStatus('success')
-      return
-    }
-
-    setHumanVerificationStep(nextStep)
-    setHumanVerificationStatus('idle')
-  }
-
-  return (
-    <form className="login-card register-card" aria-label="个人空间注册表单" onSubmit={onSubmit}>
-      <div className="register-heading">
-        <h2>创建账号</h2>
-      </div>
-
-      {registerError && (
-        <div className="login-error" role="alert">
-          {registerError}
-        </div>
-      )}
-
-      <label className="field">
-        <span>用户名</span>
-        <input autoComplete="name" name="username" placeholder="设置用户名" type="text" />
-      </label>
-
-      <label className="field">
-        <span>账号</span>
-        <input autoComplete="username" name="account" placeholder="设置登录账号" type="text" />
-      </label>
-
-      <PasswordField
-        autoComplete="new-password"
-        label="密码"
-        name="password"
-        placeholder="设置密码"
-        showPassword={showPassword}
-        onToggleVisibility={() => setShowPassword((current) => !current)}
-      />
-
-      <HumanVerification
-        challenge={humanChallenge}
-        currentStep={humanVerificationStep}
-        onCharacterClick={handleVerificationClick}
-        status={humanVerificationStatus}
-        verified={isHumanVerified}
-      />
-
-      <label className="field">
-        <span>绑定邮箱（可选）</span>
-        <input autoComplete="email" name="email" placeholder="可选，用于找回账号" type="email" />
-      </label>
-
-      <input name="humanVerified" type="hidden" value={isHumanVerified ? 'true' : 'false'} />
-
-      <button className="submit-button" type="submit" disabled={!isHumanVerified}>
-        注册
-        <ArrowRight aria-hidden="true" size={18} />
-      </button>
-
-      <div className="auth-switch-row">
-        <span>已有账号？</span>
-        <button type="button" onClick={onShowLogin}>
-          返回登录
-        </button>
-      </div>
-    </form>
-  )
-}
-
-function HumanVerification({
-  challenge,
-  currentStep,
-  onCharacterClick,
-  status,
-  verified,
-}: {
-  readonly challenge: HumanChallenge
-  readonly currentStep: number
-  readonly onCharacterClick: (character: string) => void
-  readonly status: 'idle' | 'error' | 'success'
-  readonly verified: boolean
-}) {
-  const nextCharacter = challenge.answer[Math.min(currentStep, challenge.answer.length - 1)]
-  const helperText =
-    status === 'error'
-      ? `顺序不正确，请从“${challenge.answer[0]}”重新开始`
-      : verified
-        ? '验证正确'
-        : `请依次点击：${challenge.answer.join('、')}`
-
-  return (
-    <div className={verified ? 'human-check is-verified' : 'human-check'}>
-      <div className="human-check-copy">
-        <span>图形验证</span>
-        <strong>{verified ? '验证正确，可以注册' : `下一步点击“${nextCharacter}”`}</strong>
-      </div>
-      <div className="human-pattern" aria-label="按顺序点击图案中的文字" role="group">
-        <Puzzle className="human-pattern-icon" aria-hidden="true" size={76} />
-        {challenge.options.map((character) => (
-          <button
-            aria-label={`点击字符${character}`}
-            className="human-symbol"
-            disabled={verified}
-            key={character}
-            type="button"
-            onClick={() => onCharacterClick(character)}
-          >
-            {character}
-          </button>
-        ))}
-        {verified ? (
-          <div className="human-verified-badge" aria-hidden="true">
-            <CheckCircle2 size={19} />
-          </div>
-        ) : null}
-      </div>
-      <p role="status">{helperText}</p>
-    </div>
-  )
-}
-
-function createHumanChallenge(): HumanChallenge {
-  const phrase = HUMAN_CHALLENGE_PHRASES[Math.floor(Math.random() * HUMAN_CHALLENGE_PHRASES.length)]
-  const answer = Array.from(phrase)
-
-  return {
-    answer,
-    options: shuffle(answer),
-    phrase,
-  }
-}
-
-function shuffle<T>(items: readonly T[]): readonly T[] {
-  const shuffled = [...items]
-
-  for (let index = shuffled.length - 1; index > 0; index -= 1) {
-    const swapIndex = Math.floor(Math.random() * (index + 1))
-    const current = shuffled[index]
-    shuffled[index] = shuffled[swapIndex]
-    shuffled[swapIndex] = current
-  }
-
-  return shuffled
-}
-
-function PasswordField({
-  autoComplete,
-  disabled = false,
-  label,
-  name,
-  onToggleVisibility,
-  placeholder,
-  showPassword,
-}: {
-  readonly autoComplete: string
-  readonly disabled?: boolean
-  readonly label: string
-  readonly name: string
-  readonly onToggleVisibility: () => void
-  readonly placeholder: string
-  readonly showPassword: boolean
-}) {
-  return (
-    <label className="field">
-      <span>{label}</span>
-      <div className="password-input-wrap">
-        <input
-          autoComplete={autoComplete}
-          disabled={disabled}
-          name={name}
-          placeholder={placeholder}
-          type={showPassword ? 'text' : 'password'}
-        />
-        <button
-          aria-label={showPassword ? '隐藏密码' : '显示密码'}
-          className="password-visibility-toggle"
-          disabled={disabled}
-          title={showPassword ? '隐藏密码' : '显示密码'}
-          type="button"
-          onClick={onToggleVisibility}
-        >
-          {showPassword ? (
-            <EyeOff aria-hidden="true" size={18} />
-          ) : (
-            <Eye aria-hidden="true" size={18} />
-          )}
-        </button>
-      </div>
-    </label>
   )
 }
 
