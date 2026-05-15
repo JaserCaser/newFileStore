@@ -1,0 +1,71 @@
+/* ─── 右键菜单 ─── */
+
+.fm-context-menu {
+  position: fixed;
+  z-index: 1000;
+  min-width: 180px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 14px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.12);
+  backdrop-filter: blur(24px) saturate(1.3);
+  padding: 6px;
+  animation: menu-appear 150ms ease-out both;
+}
+
+@keyframes menu-appear {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.fm-context-menu-header {
+  padding: 8px 12px 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  margin-bottom: 4px;
+}
+
+.fm-context-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  color: var(--color-text);
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 8px;
+  transition: background 120ms ease;
+  cursor: pointer;
+}
+
+.fm-context-menu-item:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.fm-context-menu-item.danger {
+  color: var(--color-danger);
+}
+
+.fm-context-menu-item.danger:hover {
+  background: rgba(255, 59, 48, 0.08);
+}
+
+.fm-context-menu-divider {
+  height: 1px;
+  background: rgba(0, 0, 0, 0.06);
+  margin: 4px 12px;
+}

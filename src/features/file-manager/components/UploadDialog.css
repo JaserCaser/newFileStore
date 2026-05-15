@@ -1,0 +1,78 @@
+/* ─── 上传弹窗 ─── */
+
+.fm-upload-dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 40px 24px;
+  border: 2px dashed rgba(0, 0, 0, 0.12);
+  border-radius: 16px;
+  color: var(--color-muted);
+  transition: all 200ms ease;
+  cursor: pointer;
+}
+
+.fm-upload-dropzone:hover,
+.fm-upload-dropzone.dragging {
+  border-color: var(--color-apple-blue);
+  background: rgba(0, 113, 227, 0.04);
+  color: var(--color-apple-blue);
+}
+
+.fm-upload-hint {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.fm-upload-list {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.fm-upload-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: 10px;
+  font-size: 13px;
+}
+
+.fm-upload-item-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.fm-upload-item-size {
+  color: var(--color-muted);
+  flex-shrink: 0;
+}
+
+.fm-upload-done {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 40px 24px;
+}
+
+.fm-upload-done p {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text);
+}
