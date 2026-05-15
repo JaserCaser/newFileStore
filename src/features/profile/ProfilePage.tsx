@@ -2,7 +2,6 @@ import {
   ArrowLeft,
   BadgeCheck,
   Building2,
-  Camera,
   CheckCircle2,
   Mail,
   MapPin,
@@ -13,6 +12,7 @@ import {
 import { useMemo, useState, type ReactNode, type SyntheticEvent } from 'react'
 import { useAuth } from '../auth/useAuth'
 import type { UserProfileUpdate } from '../auth/types'
+import { AvatarEditor } from './AvatarEditor'
 import './ProfilePage.css'
 
 type ProfilePageProps = {
@@ -35,7 +35,6 @@ const ROLE_LABELS = {
 export function ProfilePage({ onBack }: ProfilePageProps) {
   const { user, updateProfile } = useAuth()
   const [saved, setSaved] = useState(false)
-  const [avatarLoadFailed, setAvatarLoadFailed] = useState(false)
   const [form, setForm] = useState<ProfileFormState>(() => ({
     username: user?.username ?? '',
     avatar: user?.avatar ?? '',
@@ -66,7 +65,6 @@ export function ProfilePage({ onBack }: ProfilePageProps) {
   const initials = getInitials(form.username || user.account)
   const roleLabel = ROLE_LABELS[user.role]
   const profileCompletionText = String(profileCompletion)
-  const displayAvatar = avatarLoadFailed ? '' : sanitizeAvatarUrl(form.avatar)
 
   const handleSubmit = (event: SyntheticEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -78,34 +76,14 @@ export function ProfilePage({ onBack }: ProfilePageProps) {
     const department = form.department.trim()
     const location = form.location.trim()
 
-    updateProfile({
-      username: username || user.username,
-      avatar,
-      email,
-      phone,
-      bio,
-      department,
-      location,
-    })
-    setForm({
-      username: username || user.username,
-      avatar,
-      email,
-      phone,
-      bio,
-      department,
-      location,
-    })
-    setAvatarLoadFailed(false)
+    updateProfile({ username: username || user.username, avatar, email, phone, bio, department, location })
+    setForm({ username: username || user.username, avatar, email, phone, bio, department, location })
     setSaved(true)
     window.setTimeout(() => setSaved(false), 2200)
   }
 
   const updateField = (field: keyof ProfileFormState, value: string) => {
     setSaved(false)
-    if (field === 'avatar') {
-      setAvatarLoadFailed(false)
-    }
     setForm((current) => ({ ...current, [field]: value }))
   }
 
@@ -123,21 +101,11 @@ export function ProfilePage({ onBack }: ProfilePageProps) {
       </header>
 
       <section className="profile-hero" aria-labelledby="profile-title">
-        <div className="profile-avatar-wrap">
-          {displayAvatar ? (
-            <img
-              className="profile-avatar-img"
-              src={displayAvatar}
-              alt="User avatar"
-              onError={() => setAvatarLoadFailed(true)}
-            />
-          ) : (
-            <div className="profile-avatar-fallback">{initials}</div>
-          )}
-          <span className="profile-camera" title="请通过下方头像 URL 字段设置头像">
-            <Camera size={18} />
-          </span>
-        </div>
+        <AvatarEditor
+          value={form.avatar}
+          initials={initials}
+          onChange={(value) => updateField('avatar', value)}
+        />
 
         <div className="profile-heading">
           <p className="profile-eyebrow">Personal settings</p>
@@ -173,13 +141,6 @@ export function ProfilePage({ onBack }: ProfilePageProps) {
               label="显示名称"
               value={form.username}
               onChange={(value) => updateField('username', value)}
-            />
-            <ProfileField
-              icon={<Camera size={18} />}
-              label="头像 URL"
-              value={form.avatar}
-              placeholder="https://..."
-              onChange={(value) => updateField('avatar', value)}
             />
             <ProfileField
               icon={<Mail size={18} />}
