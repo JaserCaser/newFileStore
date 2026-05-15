@@ -9,6 +9,7 @@ type AvatarEditorProps = {
 }
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
 
 export function AvatarEditor({ value, initials, onChange }: AvatarEditorProps) {
   const [open, setOpen] = useState(false)
@@ -48,6 +49,11 @@ export function AvatarEditor({ value, initials, onChange }: AvatarEditorProps) {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) return
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+      setFileError('仅支持 JPG、PNG、GIF 或 WebP 格式')
+      event.target.value = ''
+      return
+    }
     if (file.size > MAX_FILE_SIZE) {
       setFileError('图片不能超过 2MB，请选择更小的文件')
       event.target.value = ''
@@ -65,7 +71,11 @@ export function AvatarEditor({ value, initials, onChange }: AvatarEditorProps) {
   const handleUrlChange = (val: string) => {
     setUrlDraft(val)
     if (debounceRef.current) clearTimeout(debounceRef.current)
-    debounceRef.current = setTimeout(() => onChange(val), 600)
+    debounceRef.current = setTimeout(() => {
+      if (!val.trim().toLowerCase().startsWith('data:')) {
+        onChange(val)
+      }
+    }, 600)
   }
 
   const handleRemove = () => {

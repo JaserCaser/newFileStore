@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { AvatarEditor } from './AvatarEditor'
@@ -97,6 +97,20 @@ describe('AvatarEditor', () => {
     vi.unstubAllGlobals()
   })
 
+  it('shows error and does not call onChange when file has disallowed MIME type', async () => {
+    const user = userEvent.setup()
+    renderEditor()
+    await user.click(screen.getByRole('button', { name: '修改头像' }))
+
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement
+    const badFile = new File(['<html></html>'], 'evil.html', { type: 'text/html' })
+    Object.defineProperty(fileInput, 'files', { value: [badFile] })
+    fireEvent.change(fileInput)
+
+    expect(screen.getByText('仅支持 JPG、PNG、GIF 或 WebP 格式')).toBeInTheDocument()
+    expect(mockOnChange).not.toHaveBeenCalled()
+  })
+
   it('shows error and does not call onChange when file exceeds 2MB', async () => {
     const user = userEvent.setup()
     renderEditor()
@@ -110,6 +124,22 @@ describe('AvatarEditor', () => {
     fireEvent.change(fileInput)
 
     expect(screen.getByText('图片不能超过 2MB，请选择更小的文件')).toBeInTheDocument()
+    expect(mockOnChange).not.toHaveBeenCalled()
+  })
+
+  it('does not call onChange when a data: URL is pasted into the URL input', async () => {
+    const user = userEvent.setup()
+    renderEditor()
+    await user.click(screen.getByRole('button', { name: '修改头像' }))
+    await user.click(screen.getByText('输入图片 URL'))
+
+    vi.useFakeTimers()
+    const urlInput = screen.getByPlaceholderText('https://...')
+    fireEvent.change(urlInput, {
+      target: { value: 'data:image/svg+xml,<svg><script>alert(1)</script></svg>' },
+    })
+
+    vi.advanceTimersByTime(600)
     expect(mockOnChange).not.toHaveBeenCalled()
   })
 
