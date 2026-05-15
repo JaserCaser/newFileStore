@@ -36,6 +36,12 @@ export function AvatarEditor({ value, initials, onChange }: AvatarEditorProps) {
     return () => document.removeEventListener('mousedown', handler)
   }, [open])
 
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+    }
+  }, [])
+
   const displaySrc = imgError ? '' : resolveDisplaySrc(value)
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -92,7 +98,7 @@ export function AvatarEditor({ value, initials, onChange }: AvatarEditorProps) {
       </button>
 
       {open && (
-        <div className="avatar-picker-popover" role="menu">
+        <div className="avatar-picker-popover">
           <button
             type="button"
             className="avatar-picker-item"
