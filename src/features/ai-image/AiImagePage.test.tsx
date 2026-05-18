@@ -35,13 +35,16 @@ describe('AiImagePage', () => {
 
     render(<AiImagePage onBack={vi.fn()} />)
 
-    await user.type(screen.getByLabelText('API Key'), 'sk-test')
-    await user.type(screen.getByLabelText('描述内容'), '清晨的玻璃温室和蓝色陶瓷杯')
-    await user.click(screen.getByRole('button', { name: '生成图片' }))
+    await user.click(screen.getByRole('button', { name: '生图设置' }))
+    const apiKeyInputs = screen.getAllByPlaceholderText('可留空，默认使用本地代理密钥')
+    await user.type(apiKeyInputs[0], 'sk-test')
+    
+    await user.type(screen.getByRole('textbox', { name: '输入画面描述' }), '清晨的玻璃温室和蓝色陶瓷杯')
+    await user.click(screen.getByRole('button', { name: '发送' }))
 
     await waitFor(
       () => {
-        expect(screen.getByAltText('AI 生成结果')).toBeInTheDocument()
+        expect(screen.getByAltText('生成结果')).toBeInTheDocument()
       },
       { timeout: 2000 },
     )
@@ -74,9 +77,12 @@ describe('AiImagePage', () => {
 
     render(<AiImagePage onBack={vi.fn()} />)
 
-    await user.type(screen.getByLabelText('API Key'), 'sk-test')
-    await user.type(screen.getByLabelText('描述内容'), 'A clean commercial poster')
-    await user.click(screen.getByRole('button', { name: '生成图片' }))
+    await user.click(screen.getByRole('button', { name: '生图设置' }))
+    const apiKeyInputs = screen.getAllByPlaceholderText('可留空，默认使用本地代理密钥')
+    await user.type(apiKeyInputs[0], 'sk-test')
+    
+    await user.type(screen.getByRole('textbox', { name: '输入画面描述' }), 'A clean commercial poster')
+    await user.click(screen.getByRole('button', { name: '发送' }))
 
     await waitFor(() => {
       expect(screen.getByText('余额不足')).toBeInTheDocument()
@@ -95,7 +101,66 @@ describe('AiImagePage', () => {
     }
 
     await waitFor(() => {
-      expect(screen.getByText('reference.png')).toBeInTheDocument()
+      expect(screen.getByAltText('参考图')).toBeInTheDocument()
+    })
+  })
+
+  it('shows an error and does not call fetch when the reference image is larger than 8MB', () => {
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+
+    render(<AiImagePage onBack={vi.fn()} />)
+
+    const file = new File([new Uint8Array(9 * 1024 * 1024)], 'large-reference.png', {
+      type: 'image/png',
+    })
+    const input = document.querySelector('input[type="file"]')
+    expect(input).not.toBeNull()
+
+    if (input) {
+      fireEvent.change(input, { target: { files: [file] } })
+    }
+
+    expect(screen.getByText('参考图片不能超过 8MB')).toBeInTheDocument()
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it('shows an error and does not call fetch when the reference file is not an image', () => {
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+
+    render(<AiImagePage onBack={vi.fn()} />)
+
+    const file = new File(['pdf'], 'reference.pdf', { type: 'application/pdf' })
+    const input = document.querySelector('input[type="file"]')
+    expect(input).not.toBeNull()
+
+    if (input) {
+      fireEvent.change(input, { target: { files: [file] } })
+    }
+
+    expect(screen.getByText('请选择图片文件')).toBeInTheDocument()
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it('shows a timeout error when fetch is aborted', async () => {
+    const user = userEvent.setup()
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => Promise.reject(Object.assign(new DOMException('Aborted', 'AbortError')))),
+    )
+
+    render(<AiImagePage onBack={vi.fn()} />)
+
+    await user.click(screen.getByRole('button', { name: '生图设置' }))
+    const apiKeyInputs = screen.getAllByPlaceholderText('可留空，默认使用本地代理密钥')
+    await user.type(apiKeyInputs[0], 'sk-test')
+    
+    await user.type(screen.getByRole('textbox', { name: '输入画面描述' }), 'A clean commercial poster')
+    await user.click(screen.getByRole('button', { name: '发送' }))
+
+    await waitFor(() => {
+      expect(screen.getByText('生成时间过长，请稍后重试或降低图片尺寸')).toBeInTheDocument()
     })
   })
 })

@@ -157,4 +157,12 @@ describe('AvatarEditor', () => {
     vi.advanceTimersByTime(600)
     expect(mockOnChange).toHaveBeenCalledWith('https://cdn.example.com/a.png')
   })
+  it('closes popover when Escape key is pressed', async () => {
+    const user = userEvent.setup()
+    renderEditor()
+    await user.click(screen.getByRole('button', { name: '修改头像' }))
+    expect(screen.getByText('上传本地照片')).toBeInTheDocument()
+    fireEvent.keyDown(document, { key: 'Escape' })
+    expect(screen.queryByText('上传本地照片')).toBeNull()
+  })
 })

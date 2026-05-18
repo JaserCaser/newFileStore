@@ -4,7 +4,7 @@ setlocal
 cd /d "%~dp0"
 
 echo.
-echo Starting Personal FileStore App...
+echo Starting Personal FileStore Admin...
 echo Project directory: %CD%
 echo.
 
@@ -30,15 +30,15 @@ if not exist "node_modules" (
   echo.
 )
 
-echo Starting app dev server...
-echo App address: http://localhost:5137/#/files
+echo Starting admin dev server...
+echo Admin address: http://localhost:5000/#/admin
 echo.
 
-start "Personal FileStore App" /min cmd /c "npm run dev:app"
+start "Personal FileStore Admin" /min cmd /c "npm run dev:admin"
 
-start "" /min powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Sleep -Seconds 3; Start-Process 'http://localhost:5137/#/files'"
+start "" /min powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Sleep -Seconds 3; Start-Process 'http://localhost:5000/#/admin'"
 
-echo App dev server is running in a separate window.
+echo Admin dev server is running in a separate window.
 echo Close that window when you want to stop the server.
 echo.
 pause

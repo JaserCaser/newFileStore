@@ -27,15 +27,26 @@ export function AvatarEditor({ value, initials, onChange }: AvatarEditorProps) {
 
   useEffect(() => {
     if (!open) return
-    const handler = (event: MouseEvent) => {
+    const handleMouse = (event: MouseEvent) => {
       if (wrapRef.current && !wrapRef.current.contains(event.target as Node)) {
         setOpen(false)
         setUrlInputVisible(false)
         setFileError('')
       }
     }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setOpen(false)
+        setUrlInputVisible(false)
+        setFileError('')
+      }
+    }
+    document.addEventListener('mousedown', handleMouse)
+    document.addEventListener('keydown', handleKey)
+    return () => {
+      document.removeEventListener('mousedown', handleMouse)
+      document.removeEventListener('keydown', handleKey)
+    }
   }, [open])
 
   useEffect(() => {
